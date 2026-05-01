@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>GenZ Coder - Try it Yourself</title>
+  <link rel="stylesheet" href="style.css">
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <style>
+    body, html {
+      margin: 0;
+      padding: 0;
+      height: 100%;
+      background-color: #f1f1f1;
+      font-family: 'Segoe UI', Arial, sans-serif;
+      overflow: hidden;
+    }
+    
+    .tryit-header {
+      background-color: #E7E9EB;
+      padding: 8px 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid #ccc;
+      height: 50px;
+    }
+    
+    .header-left {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+    
+    .run-btn {
+      background-color: #04AA6D;
+      color: white;
+      border: none;
+      padding: 8px 24px;
+      font-size: 16px;
+      border-radius: 4px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-weight: bold;
+    }
+    
+    .run-btn:hover {
+      background-color: #059862;
+    }
+    
+    .header-right {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+    
+    .genz-btn {
+      background-color: #000;
+      color: #00f2fe;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-family: 'Space Grotesk', sans-serif;
+      font-weight: bold;
+    }
+    
+    .tryit-container {
+      display: flex;
+      height: calc(100vh - 50px);
+      width: 100%;
+    }
+    
+    .editor-pane, .result-pane {
+      width: 50%;
+      height: 100%;
+      position: relative;
+    }
+    
+    .editor-pane {
+      border-right: 4px solid #E7E9EB;
+    }
+    
+    #codeEditor {
+      width: 100%;
+      height: 100%;
+      padding: 16px;
+      font-family: Consolas, "Courier New", monospace;
+      font-size: 15px;
+      border: none;
+      resize: none;
+      outline: none;
+      background-color: #ffffff;
+      color: #000000;
+      box-sizing: border-box;
+    }
+    
+    #resultFrame {
+      width: 100%;
+      height: 100%;
+      border: none;
+      background-color: #ffffff;
+    }
+    
+    .icon-btn {
+      background: none;
+      border: none;
+      cursor: pointer;
+      color: #555;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .icon-btn:hover {
+      color: #000;
+    }
+    
+  </style>
+</head>
+<body>
+
+  <div class="tryit-header">
+    <div class="header-left">
+      <button class="icon-btn" onclick="window.location.href='index.html'" title="Home"><i data-lucide="home" width="20"></i></button>
+      <button class="icon-btn" title="Menu"><i data-lucide="menu" width="20"></i></button>
+      <button class="icon-btn" title="Save"><i data-lucide="save" width="20"></i></button>
+      <button class="icon-btn" title="Theme"><i data-lucide="moon" width="20"></i></button>
+      
+      <button class="run-btn" id="runBtn">Run <i data-lucide="chevron-right" width="16"></i></button>
+    </div>
+    
+    <div class="header-right">
+      <span style="color: #555; font-size: 13px;">GenZ Live Environment</span>
+      <button class="genz-btn" onclick="window.location.href='index.html'">Get your own website</button>
+    </div>
+  </div>
+  
+  <div class="tryit-container">
+    <div class="editor-pane">
+<textarea id="codeEditor" spellcheck="false">
+<!DOCTYPE html>
+<html>
+<head>
+<title>Page Title</title>
+<style>
+  body {
+    font-family: Arial, sans-serif;
+  }
+  h1 {
+    color: #04AA6D;
+  }
+</style>
+</head>
+<body>
+
+<h1>This is a Heading</h1>
+<p>This is a paragraph.</p>
+
+</body>
+</html>
+</textarea>
+    </div>
+    <div class="result-pane">
+      <iframe id="resultFrame" name="resultFrame"></iframe>
+    </div>
+  </div>
+
+  <script>
+    lucide.createIcons();
+    
+    const runBtn = document.getElementById('runBtn');
+    const codeEditor = document.getElementById('codeEditor');
+    const resultFrame = document.getElementById('resultFrame');
+    
+    function runCode() {
+      const code = codeEditor.value;
+      const iframeDoc = resultFrame.contentDocument || resultFrame.contentWindow.document;
+      iframeDoc.open();
+      iframeDoc.write(code);
+      iframeDoc.close();
+    }
+    
+    // Load initial code from localStorage if passed
+    const passedCode = localStorage.getItem('tryit_code');
+    if (passedCode) {
+        codeEditor.value = passedCode;
+        localStorage.removeItem('tryit_code'); // clear it after loading
+    }
+    
+    // Initial run
+    runCode();
+    
+    runBtn.addEventListener('click', runCode);
+    
+    // Add real-time update on keyup if you want it (though W3 uses a 'Run' button)
+    // codeEditor.addEventListener('keyup', runCode);
+    
+    // Simple Tab key support in textarea
+    codeEditor.addEventListener('keydown', function(e) {
+      if (e.key == 'Tab') {
+        e.preventDefault();
+        var start = this.selectionStart;
+        var end = this.selectionEnd;
+        this.value = this.value.substring(0, start) + "  " + this.value.substring(end);
+        this.selectionStart = this.selectionEnd = start + 2;
+      }
+    });
+  </script>
+</body>
+</html>

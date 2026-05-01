@@ -1,0 +1,707 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>GenZ Coder | Interactive Excel Mastery</title>
+  <link rel="stylesheet" href="style.css">
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <script src="courses-data.js"></script>
+  <style>
+    body {
+      overflow: hidden; 
+    }
+    
+    .lms-layout {
+      display: flex;
+      height: 100vh;
+      width: 100vw;
+    }
+
+    /* Sidebar Navigation */
+    .lms-sidebar {
+      width: 280px;
+      height: 100%;
+      background: rgba(8, 5, 18, 0.95);
+      border-right: 1px solid var(--glass-border);
+      display: flex;
+      flex-direction: column;
+      z-index: 10;
+    }
+
+    .lms-header {
+      padding: 24px;
+      border-bottom: 1px solid var(--glass-border);
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .lms-header h2 {
+      font-size: 1.2rem;
+      margin-bottom: 4px;
+    }
+
+    .progress-bar {
+      width: 100%;
+      height: 6px;
+      background: rgba(255,255,255,0.1);
+      border-radius: 4px;
+      margin-top: 12px;
+      overflow: hidden;
+    }
+
+    .progress-fill {
+      height: 100%;
+      background: linear-gradient(to right, var(--accent-cyan), var(--accent-pink));
+      width: 0%;
+      transition: width 0.3s ease;
+    }
+
+    .chapter-list {
+      flex: 1;
+      overflow-y: auto;
+      padding: 16px;
+      list-style: none;
+    }
+
+    .chapter-item {
+      padding: 12px 16px;
+      border-radius: 12px;
+      cursor: not-allowed;
+      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      transition: all 0.2s ease;
+      opacity: 0.5;
+    }
+
+    .chapter-item.unlocked {
+      cursor: pointer;
+      opacity: 1;
+    }
+
+    .chapter-item.unlocked:hover {
+      background: rgba(255,255,255,0.05);
+    }
+
+    .chapter-item.active {
+      background: rgba(0, 242, 254, 0.1) !important;
+      border: 1px solid rgba(0, 242, 254, 0.3);
+      cursor: pointer;
+      opacity: 1;
+    }
+
+    .chapter-icon {
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      border: 2px solid var(--text-muted);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 10px;
+      color: transparent;
+    }
+
+    .chapter-item.completed .chapter-icon {
+      background: var(--accent-purple);
+      border-color: var(--accent-purple);
+      color: #fff;
+    }
+
+    .chapter-item.active .chapter-icon {
+      border-color: var(--accent-cyan);
+    }
+
+    .chapter-title {
+      font-family: 'Space Grotesk', sans-serif;
+      font-weight: 500;
+      font-size: 0.95rem;
+    }
+
+    /* Split Main Area */
+    .lms-main {
+      flex: 1;
+      display: flex;
+      flex-direction: row;
+      background: var(--bg-color);
+      height: 100%;
+      overflow: hidden;
+    }
+
+    .lesson-panel {
+      flex: 1;
+      padding: 40px;
+      overflow-y: auto;
+      border-right: 1px solid var(--glass-border);
+      position: relative;
+    }
+
+    .practice-panel {
+      flex: 1.2;
+      background: #0f111a;
+      display: flex;
+      flex-direction: column;
+      position: relative;
+    }
+
+    .practice-header {
+      padding: 20px 40px;
+      border-bottom: 1px solid var(--glass-border);
+      background: rgba(255,255,255,0.02);
+    }
+
+    .practice-workspace {
+      flex: 1;
+      padding: 40px;
+      overflow-y: auto;
+    }
+
+    /* Typography */
+    .content-title {
+      font-size: 2rem;
+      margin-bottom: 24px;
+      font-weight: 800;
+    }
+
+    .content-text {
+      color: var(--text-muted);
+      line-height: 1.8;
+      font-size: 1.1rem;
+      margin-bottom: 24px;
+    }
+
+    /* Spreadsheet Grid styling */
+    .excel-wrap {
+      background: white;
+      border-radius: 8px;
+      overflow: auto;
+      max-height: 60vh;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+    }
+
+    .excel-grid {
+      width: 100%;
+      border-collapse: collapse;
+      color: black;
+      font-family: 'Segoe UI', Arial, sans-serif;
+      font-size: 13px;
+    }
+
+    .excel-grid th, .excel-grid td {
+      border: 1px solid #d4d4d4;
+      padding: 0;
+      position: relative;
+    }
+
+    .excel-grid th {
+      background: #f3f2f1;
+      text-align: center;
+      font-weight: normal;
+      color: #605e5c;
+      padding: 4px;
+    }
+
+    .excel-grid .row-header {
+      background: #f3f2f1;
+      text-align: center;
+      width: 35px;
+      color: #605e5c;
+    }
+
+    .cell-input {
+      width: 100%;
+      height: 100%;
+      min-height: 28px;
+      border: none;
+      padding: 4px 8px;
+      outline: none;
+      font-family: 'Segoe UI', Arial, sans-serif;
+    }
+
+    .cell-input:focus {
+      border: 2px solid #107c41;
+      padding: 2px 6px;
+      z-index: 10;
+      position: relative;
+    }
+
+    .cell-input:disabled {
+      background: #fff;
+      color: #333;
+    }
+
+    .highlighted-cell {
+      background: rgba(0, 242, 254, 0.15) !important;
+      outline: 1px solid var(--accent-cyan);
+      box-shadow: inset 0 0 0 1px var(--accent-cyan);
+    }
+
+    /* Action Footer in Lesson Panel */
+    .lesson-footer {
+      margin-top: 40px;
+      padding-top: 24px;
+      border-top: 1px solid var(--glass-border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .btn:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+    }
+
+    /* --- Mobile Responsiveness for Course Viewer --- */
+    @media (max-width: 768px) {
+      body {
+        overflow: auto; /* Allow scrolling on phones */
+      }
+      .lms-layout {
+        flex-direction: column;
+        height: auto;
+      }
+      .lms-sidebar {
+        width: 100%;
+        height: auto;
+        max-height: 250px;
+        border-right: none;
+        border-bottom: 1px solid var(--glass-border);
+      }
+      .lms-main {
+        flex-direction: column;
+        height: auto;
+        overflow: visible;
+      }
+      .lesson-panel {
+        padding: 20px;
+        border-right: none;
+        border-bottom: 1px solid var(--glass-border);
+      }
+      .practice-panel {
+        padding: 0;
+      }
+      .practice-header {
+        padding: 15px 20px;
+      }
+      .practice-workspace {
+        padding: 20px;
+      }
+      .excel-wrap {
+        max-height: none;
+        overflow-x: auto;
+      }
+      .lesson-footer {
+        flex-direction: column;
+        gap: 16px;
+      }
+      .btn {
+        width: 100%;
+        justify-content: center;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="lms-layout">
+    <!-- Sidebar -->
+    <div class="lms-sidebar">
+      <div class="lms-header">
+        <a href="index.html" style="color: var(--text-main);"><i data-lucide="arrow-left"></i></a>
+        <div>
+          <h2>Practice Arena</h2>
+          <span style="font-size: 0.85rem; color: var(--text-muted);"><span id="progressText">0</span>% Completed</span>
+          <div class="progress-bar">
+            <div class="progress-fill" id="progressFill"></div>
+          </div>
+        </div>
+      </div>
+      <ul class="chapter-list" id="chapterList"></ul>
+    </div>
+
+    <!-- Main Content -->
+    <div class="lms-main">
+      
+      <!-- Theory & Instructions (Left) -->
+      <div class="lesson-panel" id="lessonPanel">
+        <span class="section-tag" style="margin-bottom: 12px; display: block;" id="moduleTag">Module</span>
+        <h1 class="content-title" id="lessonTitle">Loading...</h1>
+        <div class="content-text" id="lessonText"></div>
+
+        <div style="background: rgba(0, 242, 254, 0.05); border-left: 4px solid var(--accent-cyan); padding: 20px; border-radius: 0 12px 12px 0; margin-top: 40px;">
+          <h4 style="color: var(--text-main); font-family: 'Space Grotesk'; margin-bottom: 8px; display: flex; align-items:center; gap:8px;">
+            <i data-lucide="terminal" width="18"></i> Mission Objective
+          </h4>
+          <p style="color: var(--accent-cyan); font-weight: 500;" id="missionText"></p>
+        </div>
+
+        <div class="lesson-footer">
+          <div id="feedback" style="display: flex; align-items: center; gap: 8px; font-weight: 500;"></div>
+          <button class="btn btn-primary" id="nextBtn" disabled>
+            Next Concept <i data-lucide="arrow-right" width="18"></i>
+          </button>
+        </div>
+      </div>
+
+      <!-- Practice Workspace (Right) -->
+      <div class="practice-panel">
+        <div class="practice-header">
+          <h3 style="font-family: 'Space Grotesk'; display:flex; align-items:center; gap:8px; margin:0;">
+            <i data-lucide="table" width="20" color="#107c41"></i> Excel Worksheet <span style="font-size: 1rem; color: var(--text-muted); font-weight: normal; margin-left: 10px;">(GenZ Virtual Env)</span>
+          </h3>
+        </div>
+        
+        <div class="practice-workspace">
+          <p style="color: var(--text-muted); margin-bottom: 16px;">Type the correct formula inside the highlighted yellow cell and press <b>Enter</b>.</p>
+          
+          <div class="excel-wrap">
+            <table class="excel-grid" id="excelTable">
+              <!-- Grid injected via JS -->
+            </table>
+          </div>
+          
+          <button class="btn btn-outline" id="checkBtn" style="margin-top: 24px; border-color: #107c41; color: #107c41;">
+            <i data-lucide="play" width="16"></i> Run Formula
+          </button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <script>
+    // AUTH CHECK FIRST
+    if (localStorage.getItem('isLoggedIn') !== 'true' || localStorage.getItem('hasPaid') !== 'true') {
+        window.location.href = "index.html"; // Protect route!
+    }
+
+    // DYNAMIC COURSE LOADER
+    const urlParams = new URLSearchParams(window.location.search);
+    const courseId = urlParams.get('course') || 'excel';
+    let chapters = courseDataDB[courseId];
+    if (!chapters) chapters = courseDataDB['excel']; // fallback
+    
+    document.addEventListener('DOMContentLoaded', () => {
+      const isExcel = courseId === 'excel';
+      // Change sidebar title
+      const titleEl = document.querySelector('.lms-header h2');
+      if (titleEl) {
+         titleEl.innerHTML = `<i data-lucide="book-open" width="20" color="#00f2fe"></i> ${courseId.toUpperCase()} Course`;
+      }
+
+      if (!isExcel) {
+         const ph = document.querySelector('.practice-header h3');
+         if (ph) ph.innerHTML = '<i data-lucide="terminal" width="20" color="#00f2fe"></i> Code Editor <span style="font-size: 1rem; color: var(--text-muted); font-weight: normal; margin-left: 10px;">(GenZ Virtual Env)</span>';
+         
+         const ws = document.querySelector('.practice-workspace');
+         if(ws) {
+            ws.innerHTML = `
+           <p style="color: var(--text-muted); margin-bottom: 16px;">Type your code answer below and click <b>Run Code</b>.</p>
+           <div style="background: #1e1e2e; border-radius: 12px; padding: 16px; border: 1px solid var(--glass-border); min-height: 250px;">
+             <div style="display:flex; gap: 8px; margin-bottom: 16px;">
+               <div style="width:12px;height:12px;border-radius:50%;background:#ff5f56"></div>
+               <div style="width:12px;height:12px;border-radius:50%;background:#ffbd2e"></div>
+               <div style="width:12px;height:12px;border-radius:50%;background:#27c93f"></div>
+             </div>
+             <div style="display:flex; align-items:flex-start; gap:12px;">
+                <span style="color:#4facfe; font-family:'Space Grotesk'; font-weight:bold; margin-top:2px;">></span>
+                <textarea id="codeTermInput" placeholder="Enter solution here..." spellcheck="false" style="width:100%; height: 180px; background: transparent; border: none; color: #f5f5f7; font-family: monospace; font-size: 1.1rem; outline: none; margin-top: -2px; resize: none;"></textarea>
+             </div>
+           </div>
+           <div style="display: flex; gap: 16px; margin-top: 24px;">
+             <button class="btn btn-primary" id="runCodeBtn">
+               <i data-lucide="play" width="16"></i> Run Code
+             </button>
+             <button class="btn" id="tryItBtn" style="background-color: #04AA6D; color: white; border: none; font-weight: bold; border-radius: 8px;">
+               Try it Yourself &raquo;
+             </button>
+           </div>
+            `;
+            const runCodeBtn = document.getElementById('runCodeBtn');
+            const tryItBtn = document.getElementById('tryItBtn');
+            
+            if(runCodeBtn) {
+               runCodeBtn.addEventListener('click', () => {
+                   const input = document.getElementById('codeTermInput');
+                   if(input) checkAnswer(input.value);
+               });
+            }
+            if(tryItBtn) {
+               tryItBtn.addEventListener('click', () => {
+                   const input = document.getElementById('codeTermInput');
+                   if(input && input.value.trim() !== '') {
+                       localStorage.setItem('tryit_code', input.value);
+                   } else {
+                       localStorage.removeItem('tryit_code');
+                   }
+                   window.open('tryit.html', '_blank');
+               });
+            }
+         }
+      }
+    });
+
+    let currentChapterIndex = 0;
+    
+    // FETCH COMPLETED DATA
+    let completedChapters = [];
+    const savedProgressStr = localStorage.getItem('completedModules_' + courseId);
+    if (savedProgressStr) completedChapters = JSON.parse(savedProgressStr);
+
+    // DOM
+    const nextBtn = document.getElementById('nextBtn');
+    const checkBtn = document.getElementById('checkBtn');
+    const feedbackEl = document.getElementById('feedback');
+    
+    function init() {
+      loadChapter(0);
+      
+      nextBtn.addEventListener('click', () => {
+        if(currentChapterIndex < chapters.length - 1) {
+          currentChapterIndex++;
+          loadChapter(currentChapterIndex);
+        } else {
+          alert("Course Completed! You're now an Excel OP. 🎉");
+          window.location.href = "index.html";
+        }
+      });
+
+      checkBtn.addEventListener('click', () => {
+        const input = document.getElementById(`cell-${chapters[currentChapterIndex].targetCell}`);
+        if(input) checkAnswer(input.value);
+      });
+    }
+
+    function renderSidebar() {
+      const list = document.getElementById('chapterList');
+      list.innerHTML = '';
+      
+      chapters.forEach((ch, idx) => {
+        const isActive = idx === currentChapterIndex;
+        const isCompleted = completedChapters.includes(idx);
+
+        const li = document.createElement('li');
+        li.className = `chapter-item unlocked ${isActive ? 'active' : ''} ${isCompleted ? 'completed' : ''}`;
+        
+        li.onclick = () => { currentChapterIndex = idx; loadChapter(idx); };
+
+        li.innerHTML = `
+          <div class="chapter-icon">
+            ${isCompleted ? '<i data-lucide="check" width="14"></i>' : idx+1}
+          </div>
+          <span class="chapter-title" style="font-size: 0.95rem;">${ch.title}</span>
+        `;
+        list.appendChild(li);
+      });
+
+      // Progress bar
+      const progress = Math.round((completedChapters.length / chapters.length) * 100);
+      document.getElementById('progressFill').style.width = `${progress}%`;
+      document.getElementById('progressText').innerText = progress;
+      lucide.createIcons();
+    }
+
+    function loadChapter(idx) {
+      const ch = chapters[idx];
+      
+      // Update Texts
+      document.getElementById('moduleTag').innerText = `Chapter ${ch.id}`;
+      document.getElementById('lessonTitle').innerText = ch.title;
+      document.getElementById('lessonText').innerHTML = ch.text;
+      document.getElementById('missionText').innerText = ch.mission;
+      
+      feedbackEl.innerHTML = '';
+      
+      // Allow next if completed
+      if (completedChapters.includes(idx)) {
+        nextBtn.disabled = false;
+        nextBtn.innerHTML = `Next Concept <i data-lucide="arrow-right" width="18"></i>`;
+      } else {
+        nextBtn.disabled = true;
+      }
+
+      if (idx === chapters.length - 1 && nextBtn.disabled === false) {
+        nextBtn.innerHTML = `Finish Course <i data-lucide="award" width="18"></i>`;
+      }
+
+      renderGrid(ch);
+      renderSidebar();
+    }
+
+    function renderGrid(ch) {
+      const table = document.getElementById('excelTable');
+      if (!ch.gridData) return; // Skip grid generation for non-excel terminals
+      table.innerHTML = '';
+      
+      let thead = '<tr><th class="row-header"></th>';
+      const cols = ['A','B','C','D','E','F','G','H'];
+      cols.forEach(c => thead += `<th>${c}</th>`);
+      thead += '</tr>';
+      table.innerHTML += thead;
+
+      // Make 14 rows to allow scrolling
+      for(let r=1; r<=14; r++) {
+        let tr = document.createElement('tr');
+        tr.innerHTML = `<td class="row-header">${r}</td>`;
+        
+        cols.forEach(c => {
+          const cellId = `${c}${r}`;
+          const val = ch.gridData[cellId] !== undefined ? ch.gridData[cellId] : "";
+          const isTarget = cellId === ch.targetCell;
+          
+          let inputHTML = '';
+          if (isTarget) {
+            // Target input logic
+            const isCompleted = completedChapters.includes(currentChapterIndex);
+            const valueStr = isCompleted ? ch.successVal : val;
+            const bg = isCompleted ? '#dff6dd' : '#fffbe6';
+            inputHTML = `<input type="text" id="cell-${cellId}" class="cell-input target-cell" style="background: ${bg};" value="${valueStr}" placeholder="=" autocomplete="off" />`;
+          } else {
+            // Read only inputs
+            inputHTML = `<input type="text" id="cell-${cellId}" class="cell-input readonly-cell" data-col="${c}" data-row="${r}" data-cell="${cellId}" readonly value="${val}" style="cursor: cell; user-select: none;" />`;
+          }
+          tr.innerHTML += `<td>${inputHTML}</td>`;
+        });
+        table.appendChild(tr);
+      }
+
+      const tInput = document.querySelector('.target-cell');
+      if(tInput) {
+        tInput.focus();
+        tInput.addEventListener('keydown', (e) => {
+          if (e.key === 'Enter') checkAnswer(tInput.value);
+        });
+
+        // Range selection logic
+        let isDragging = false;
+        let startCell = null;
+        let endCell = null;
+        let lastInjected = "";
+
+        const allCells = document.querySelectorAll('.readonly-cell');
+        
+        allCells.forEach(cell => {
+          cell.addEventListener('mousedown', (e) => {
+            if (!tInput.value.startsWith('=')) return;
+            isDragging = true;
+            startCell = e.target.getAttribute('data-cell');
+            endCell = startCell;
+            
+            // Initial insert
+            injectReference(startCell);
+            
+            // Clear previous highlights
+            allCells.forEach(c => c.classList.remove('highlighted-cell'));
+            e.target.classList.add('highlighted-cell');
+          });
+
+          cell.addEventListener('mouseover', (e) => {
+            if (!isDragging) return;
+            endCell = e.target.getAttribute('data-cell');
+            
+            let ref = startCell === endCell ? startCell : `${startCell}:${endCell}`;
+            replaceLastInjected(ref);
+            drawHighlightBox(startCell, endCell);
+          });
+        });
+
+        window.addEventListener('mouseup', () => {
+          if (isDragging) {
+            isDragging = false;
+            tInput.focus();
+          }
+        });
+
+        function injectReference(ref) {
+          const cursorPos = tInput.selectionStart;
+          const textBefore = tInput.value.substring(0, cursorPos);
+          const textAfter = tInput.value.substring(cursorPos);
+          
+          tInput.value = textBefore + ref + textAfter;
+          tInput.selectionStart = tInput.selectionEnd = cursorPos + ref.length;
+          lastInjected = ref;
+        }
+
+        function replaceLastInjected(newRef) {
+          if(lastInjected === newRef) return;
+          const cursorPos = tInput.selectionStart;
+          const textBefore = tInput.value.substring(0, Math.max(0, cursorPos - lastInjected.length));
+          const textAfter = tInput.value.substring(cursorPos);
+          
+          tInput.value = textBefore + newRef + textAfter;
+          tInput.selectionStart = tInput.selectionEnd = textBefore.length + newRef.length;
+          lastInjected = newRef;
+        }
+
+        function drawHighlightBox(start, end) {
+           allCells.forEach(c => c.classList.remove('highlighted-cell'));
+           
+           let col1 = start.charCodeAt(0);
+           let row1 = parseInt(start.substring(1));
+           let col2 = end.charCodeAt(0);
+           let row2 = parseInt(end.substring(1));
+
+           let minCol = Math.min(col1, col2);
+           let maxCol = Math.max(col1, col2);
+           let minRow = Math.min(row1, row2);
+           let maxRow = Math.max(row1, row2);
+
+           allCells.forEach(c => {
+             let col = c.getAttribute('data-col').charCodeAt(0);
+             let row = parseInt(c.getAttribute('data-row'));
+             if (col >= minCol && col <= maxCol && row >= minRow && row <= maxRow) {
+               c.classList.add('highlighted-cell');
+             }
+           });
+        }
+      }
+    }
+
+    function checkAnswer(val) {
+      if (completedChapters.includes(currentChapterIndex)) return;
+
+      const ch = chapters[currentChapterIndex];
+      if(ch.validate(val)) {
+        const tCell = document.getElementById(`cell-${ch.targetCell}`);
+        if(tCell) {
+           tCell.value = ch.successVal;
+           tCell.style.background = '#dff6dd';
+        }
+        const tTerm = document.getElementById('codeTermInput');
+        if(tTerm) {
+           tTerm.value = ch.successVal;
+           tTerm.style.color = '#2ecc71';
+        }
+
+        feedbackEl.innerHTML = '<span style="color:#2ecc71; display:flex; align-items:center; gap:6px;"><i data-lucide="check-circle" width="18"></i> Mission Passed! You can now proceed.</span>';
+        
+        if (!completedChapters.includes(currentChapterIndex)) {
+           completedChapters.push(currentChapterIndex);
+           localStorage.setItem('completedModules_' + courseId, JSON.stringify(completedChapters));
+        }
+        
+        nextBtn.disabled = false;
+        if(currentChapterIndex === chapters.length - 1) {
+          nextBtn.innerHTML = `Finish Course <i data-lucide="award" width="18"></i>`;
+        }
+        renderSidebar();
+        lucide.createIcons();
+      } else {
+        feedbackEl.innerHTML = '<span style="color:#e74c3c; display:flex; align-items:center; gap:6px;"><i data-lucide="x-circle" width="18"></i> Incorrect answer. Try again!</span>';
+        const tCellErr = document.getElementById(`cell-${ch.targetCell}`);
+        if(tCellErr) tCellErr.style.background = '#ffe5e5';
+        const tTermErr = document.getElementById('codeTermInput');
+        if(tTermErr) tTermErr.style.color = '#e74c3c';
+        lucide.createIcons();
+      }
+    }
+
+    // Start
+    init();
+
+  </script>
+</body>
+</html>
