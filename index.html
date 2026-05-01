@@ -11,32 +11,30 @@
 </head>
 
 <body>
-  <!-- Login Modal -->
+  <!-- Auth Modal -->
   <div id="loginModal" class="modal">
     <div class="modal-content glass">
       <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
-        <h2 style="font-size: 2rem; font-family: 'Space Grotesk', sans-serif;">Welcome Back</h2>
+        <h2 id="authTitle" style="font-size: 2rem; font-family: 'Space Grotesk', sans-serif;">Sign Up</h2>
         <i data-lucide="x" id="closeModal" style="cursor: pointer; color: var(--text-muted);"></i>
       </div>
       <form id="loginForm">
         <div style="margin-bottom: 16px;">
           <label style="display: block; margin-bottom: 8px; color: var(--text-muted); font-size: 0.9rem;">Email</label>
-          <input type="email" required
+          <input type="email" id="authEmail" required
             style="width: 100%; padding: 12px; border-radius: 8px; border: 1px solid var(--glass-border); background: rgba(0,0,0,0.2); color: white; font-family: 'Outfit';"
             placeholder="coder@genz.com" />
         </div>
         <div style="margin-bottom: 24px;">
           <label
             style="display: block; margin-bottom: 8px; color: var(--text-muted); font-size: 0.9rem;">Password</label>
-          <input type="password" required
+          <input type="password" id="authPassword" required minlength="6"
             style="width: 100%; padding: 12px; border-radius: 8px; border: 1px solid var(--glass-border); background: rgba(0,0,0,0.2); color: white; font-family: 'Outfit';"
             placeholder="••••••••" />
         </div>
-        <button id="submitBtn" type="submit" class="btn btn-primary" style="width: 100%; justify-content: center;">Sign
-          In</button>
+        <button id="submitBtn" type="submit" class="btn btn-primary" style="width: 100%; justify-content: center;">Create Account & Pay</button>
       </form>
-      <p style="text-align: center; margin-top: 24px; color: var(--text-muted); font-size: 0.9rem;">Don't have an
-        account? <span style="color: var(--accent-cyan); cursor: pointer;">Sign Up</span></p>
+      <p style="text-align: center; margin-top: 24px; color: var(--text-muted); font-size: 0.9rem;" id="authSwitchText">Already have an account? <span id="authToggleBtn" style="color: var(--accent-cyan); cursor: pointer;">Sign In</span></p>
     </div>
   </div>
 
@@ -56,6 +54,9 @@
         </ul>
       </div>
       <div class="w3-nav-right">
+        <button id="themeToggleBtn" style="background: transparent; border: none; cursor: pointer; padding: 8px; color: var(--text-main); display: flex; align-items: center; justify-content: center;">
+           <i data-lucide="moon" id="themeIcon"></i>
+        </button>
         <div style="width: 250px; position: relative; border-radius: 20px; overflow: hidden; border: 1px solid #ccc;">
           <input type="text" placeholder="Search..." style="width: 100%; border: none; padding: 8px 36px 8px 16px; outline: none; font-family: 'Segoe UI', Arial, sans-serif;">
           <i data-lucide="search" width="16" style="position: absolute; right: 12px; top: 10px; color: #555;"></i>
@@ -276,11 +277,33 @@
     </footer>
   </div>
 
+  <script type="module" src="auth-system.js"></script>
   <script>
+    // Theme Toggle Logic
+    const themeBtn = document.getElementById('themeToggleBtn');
+    const themeIcon = document.getElementById('themeIcon');
+    let isLightMode = localStorage.getItem('theme') === 'light';
+    
+    if (isLightMode) {
+      document.body.classList.add('light-mode');
+      if(themeIcon) themeIcon.setAttribute('data-lucide', 'sun');
+    }
+    
+    if(themeBtn) {
+      themeBtn.addEventListener('click', () => {
+        document.body.classList.toggle('light-mode');
+        isLightMode = document.body.classList.contains('light-mode');
+        localStorage.setItem('theme', isLightMode ? 'light' : 'dark');
+        
+        const newIcon = isLightMode ? 'sun' : 'moon';
+        themeBtn.innerHTML = `<i data-lucide="${newIcon}" id="themeIcon"></i>`;
+        lucide.createIcons();
+      });
+    }
+
     // Initialize Lucide Icons
     lucide.createIcons();
 
-    // Navbar Scroll Effect
     const navbar = document.getElementById('navbar');
     window.addEventListener('scroll', () => {
       if (window.scrollY > 50) {
@@ -292,133 +315,195 @@
       }
     });
 
-    // Modal & Auth Logic
     const modal = document.getElementById('loginModal');
-    const loginBtn = document.getElementById('loginBtn');
     const closeBtn = document.getElementById('closeModal');
     const loginForm = document.getElementById('loginForm');
     const submitBtn = document.getElementById('submitBtn');
-    let pendingAction = null; // 'startCourse' or 'pay'
+    const authTitle = document.getElementById('authTitle');
+    const authSwitchText = document.getElementById('authSwitchText');
+    const authToggleBtn = document.getElementById('authToggleBtn');
+    
+    let isSignUp = true; // State tracker
+    let pendingAction = null;
+    let currentUser = null;
+    let userHasPaid = false;
 
-    // Check saved localstorage state
-    function updateNavbarState() {
-      if (localStorage.getItem('isLoggedIn') === 'true') {
-        const btn = document.getElementById('loginBtn');
-        if (btn) {
-          const profileHTML = `
-            <div id="loginBtn" style="display: flex; align-items: center; gap: 12px; cursor: pointer; padding: 6px 16px; background: rgba(255,255,255,0.05); border-radius: 20px; border: 1px solid var(--glass-border);">
-              <div style="width: 28px; height: 28px; border-radius: 50%; background: linear-gradient(45deg, var(--accent-cyan), var(--accent-pink)); display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 14px;">G</div>
-              <span style="font-weight: 500;">GenZ Pro User</span>
-            </div>
-          `;
-          btn.outerHTML = profileHTML;
+    // Toggle UI
+    function bindAuthToggle() {
+      document.getElementById('authToggleBtn').addEventListener('click', () => {
+        isSignUp = !isSignUp;
+        if (isSignUp) {
+          authTitle.innerText = "Sign Up";
+          submitBtn.innerText = "Create Account & Pay";
+          authSwitchText.innerHTML = 'Already have an account? <span id="authToggleBtn" style="color: var(--accent-cyan); cursor: pointer;">Sign In</span>';
+        } else {
+          authTitle.innerText = "Welcome Back";
+          submitBtn.innerText = "Sign In";
+          authSwitchText.innerHTML = 'Don\'t have an account? <span id="authToggleBtn" style="color: var(--accent-cyan); cursor: pointer;">Sign Up</span>';
         }
-      }
-    }
-    updateNavbarState();
-
-    function triggerPayment() {
-      if (localStorage.getItem('hasPaid') === 'true') {
-        window.location.href = "course-viewer.html?course=excel";
-        return;
-      }
-
-      var options = {
-          "key": "YOUR_RAZORPAY_KEY", // Yahan apni Razorpay API key dalein (jaise: rzp_test_xxxxx)
-          "amount": "9900", // ₹99 in paise
-          "currency": "INR",
-          "name": "GenZ Coder",
-          "description": "Pro Access Lifetime",
-          "image": "https://avatars.githubusercontent.com/u/1?v=4", // Aapka logo URL yahan daal sakte hain
-          "handler": function (response){
-              // Ye function payment success hone par chalega
-              localStorage.setItem('hasPaid', 'true');
-              alert("⚡ Payment Successful! Welcome to GenZ Coder Pro.\nPayment ID: " + response.razorpay_payment_id);
-              
-              if (pendingAction === 'startCourse' || pendingAction === 'pay') {
-                window.location.href = "course-viewer.html?course=excel";
-              }
-          },
-          "prefill": {
-              "name": "GenZ Student",
-              "email": "student@example.com"
-          },
-          "theme": {
-              "color": "#04AA6D"
-          }
-      };
-      
-      var rzp1 = new Razorpay(options);
-      
-      rzp1.on('payment.failed', function (response){
-              alert("Payment Failed! Reason: " + response.error.description);
+        bindAuthToggle();
       });
-      
-      rzp1.open();
     }
-
-    document.addEventListener('click', (e) => {
-      // Login btn click
-      const loginNav = e.target.closest('#loginBtn');
-      if (loginNav && localStorage.getItem('isLoggedIn') !== 'true') {
-        modal.classList.add('active');
-        lucide.createIcons();
-      }
-    });
+    bindAuthToggle();
 
     closeBtn.addEventListener('click', () => modal.classList.remove('active'));
     window.addEventListener('click', (e) => { if (e.target === modal) modal.classList.remove('active'); });
 
-    // Handle Login Submit
+    // Update Auth State globally via setInterval because auth-system.js loads async
+    const authInterval = setInterval(() => {
+      if (window.fbOnAuthStateChanged) {
+        clearInterval(authInterval);
+        window.fbOnAuthStateChanged(window.fbAuth, async (user) => {
+          if (user) {
+            currentUser = user;
+            const userDoc = await window.fbGetDoc(window.fbDoc(window.fbDb, "users", user.uid));
+            if (userDoc.exists() && userDoc.data().hasPaid) {
+               userHasPaid = true;
+            }
+            const btn = document.getElementById('loginBtn');
+            if (btn) {
+              btn.outerHTML = `<div id="loginBtn" style="display: flex; align-items: center; gap: 12px; padding: 6px 16px; background: rgba(255,255,255,0.05); border-radius: 20px; border: 1px solid var(--glass-border);"><div style="width: 28px; height: 28px; border-radius: 50%; background: linear-gradient(45deg, var(--accent-cyan), var(--accent-pink)); display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 14px;">U</div><span style="font-weight: 500; cursor:pointer;" onclick="logout()">Logout</span></div>`;
+            }
+          } else {
+            currentUser = null;
+            userHasPaid = false;
+          }
+        });
+      }
+    }, 500);
+
+    window.logout = function() {
+      if(window.fbSignOut) {
+        window.fbSignOut(window.fbAuth).then(() => {
+           window.location.reload();
+        });
+      }
+    }
+
+    function triggerPayment() {
+      if (userHasPaid) {
+        window.location.href = "course-viewer.html?course=excel";
+        return;
+      }
+      var options = {
+          "key": "YOUR_RAZORPAY_KEY", 
+          "amount": "9900",
+          "currency": "INR",
+          "name": "GenZ Coder",
+          "description": "Pro Access Lifetime",
+          "handler": async function (response){
+              if (currentUser) {
+                  await window.fbSetDoc(window.fbDoc(window.fbDb, "users", currentUser.uid), { hasPaid: true }, { merge: true });
+                  userHasPaid = true;
+                  alert("⚡ Payment Successful! Welcome to GenZ Coder Pro.\nPayment ID: " + response.razorpay_payment_id);
+                  if(pendingAction === 'course') window.location.href = "course-viewer.html?course=excel";
+              } else {
+                  alert("Payment Success, but you are not logged in!");
+              }
+          },
+          "theme": { "color": "#04AA6D" }
+      };
+      var rzp1 = new Razorpay(options);
+      rzp1.open();
+    }
+
+    // Handle Login / Sign Up Submit
     loginForm.addEventListener('submit', (e) => {
       e.preventDefault();
-      const originalText = submitBtn.innerHTML;
-      submitBtn.innerHTML = 'Authenticating... ⚡';
+      if (!window.fbCreateUser) return alert("System connecting... Wait a second.");
+      
+      const email = document.getElementById('authEmail').value;
+      const password = document.getElementById('authPassword').value;
+      const originalText = submitBtn.innerText;
+      submitBtn.innerText = 'Processing... ⚡';
 
-      setTimeout(() => {
-        modal.classList.remove('active');
-        localStorage.setItem('isLoggedIn', 'true');
-        updateNavbarState();
-        submitBtn.innerHTML = originalText;
-        loginForm.reset();
-
-        if (pendingAction === 'startCourse' || pendingAction === 'pay') {
-          triggerPayment();
-        } else {
-          window.scrollTo({ top: 500, behavior: 'smooth' });
-        }
-      }, 1500);
+      if (isSignUp) {
+          window.fbCreateUser(window.fbAuth, email, password)
+          .then((userCredential) => {
+              currentUser = userCredential.user;
+              modal.classList.remove('active');
+              submitBtn.innerText = originalText;
+              triggerPayment(); // Force payment after signup
+          })
+          .catch((error) => {
+              alert(error.message);
+              submitBtn.innerText = originalText;
+          });
+      } else {
+          window.fbSignIn(window.fbAuth, email, password)
+          .then(async (userCredential) => {
+              currentUser = userCredential.user;
+              const userDoc = await window.fbGetDoc(window.fbDoc(window.fbDb, "users", currentUser.uid));
+              if (userDoc.exists() && userDoc.data().hasPaid) {
+                  userHasPaid = true;
+                  modal.classList.remove('active');
+                  if (pendingAction === 'course' || pendingAction === 'pay') {
+                     window.location.href = "course-viewer.html?course=excel";
+                  } else {
+                     alert("Logged in successfully!");
+                     window.location.reload();
+                  }
+              } else {
+                  userHasPaid = false;
+                  modal.classList.remove('active');
+                  triggerPayment();
+              }
+              submitBtn.innerText = originalText;
+          })
+          .catch((error) => {
+              alert(error.message);
+              submitBtn.innerText = originalText;
+          });
+      }
     });
 
-    // Start Course Click
-    const startCourseBtn = document.getElementById('startCourseBtn');
-    if (startCourseBtn) {
-      startCourseBtn.addEventListener('click', (e) => {
-        e.preventDefault();
-        if (localStorage.getItem('isLoggedIn') !== 'true') {
-          pendingAction = 'startCourse';
-          modal.classList.add('active');
-        } else {
-          pendingAction = 'startCourse';
-          triggerPayment();
-        }
-      });
-    }
+    // Course access interception
+    document.addEventListener('click', (e) => {
+      const courseLink = e.target.closest('.course-box');
+      const w3CourseLink = e.target.closest('.w3-subnav a');
+      const rzpBtnClick = e.target.closest('#rzp-button1');
 
-    // Subscribe Razorpay block click
-    const rzpBtn = document.getElementById('rzp-button1');
-    if (rzpBtn) {
-      rzpBtn.addEventListener('click', (e) => {
-        e.preventDefault();
-        if (localStorage.getItem('isLoggedIn') !== 'true') {
-          pendingAction = 'pay';
-          modal.classList.add('active');
-        } else {
-          pendingAction = 'pay';
-          triggerPayment();
-        }
-      });
-    }
+      if (courseLink || w3CourseLink) {
+          e.preventDefault();
+          if (!currentUser) {
+              isSignUp = true;
+              authTitle.innerText = "Sign Up";
+              submitBtn.innerText = "Create Account & Pay";
+              modal.classList.add('active');
+              lucide.createIcons();
+              pendingAction = 'course';
+          } else if (!userHasPaid) {
+              triggerPayment();
+          } else {
+              window.location.href = (courseLink ? courseLink.href : w3CourseLink.href);
+          }
+      }
+      
+      if (rzpBtnClick) {
+          if (!currentUser) {
+              isSignUp = true;
+              authTitle.innerText = "Sign Up";
+              submitBtn.innerText = "Create Account & Pay";
+              modal.classList.add('active');
+              lucide.createIcons();
+              pendingAction = 'pay';
+          } else if (!userHasPaid) {
+              triggerPayment();
+          } else {
+              window.location.href = "course-viewer.html?course=excel";
+          }
+      }
+      
+      // Auth button click
+      const loginNav = e.target.closest('#loginBtn');
+      if (loginNav && !currentUser) {
+        isSignUp = false;
+        authTitle.innerText = "Welcome Back";
+        submitBtn.innerText = "Sign In";
+        modal.classList.add('active');
+        lucide.createIcons();
+      }
+    });
   </script>
   <!-- Load Razorpay Script -->
   <script src="https://checkout.razorpay.com/v1/checkout.js"></script>

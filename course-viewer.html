@@ -373,10 +373,30 @@
   </div>
 
   <script>
-    // AUTH CHECK FIRST
-    if (localStorage.getItem('isLoggedIn') !== 'true' || localStorage.getItem('hasPaid') !== 'true') {
-        window.location.href = "index.html"; // Protect route!
-    }
+    // Theme logic
+    let isLightMode = localStorage.getItem('theme') === 'light';
+    if (isLightMode) document.body.classList.add('light-mode');
+
+    // AUTH CHECK FIRST - FIREBASE
+    document.body.style.opacity = '0'; // Hide until verified
+    const authInterval = setInterval(async () => {
+      if (window.fbOnAuthStateChanged) {
+        clearInterval(authInterval);
+        window.fbOnAuthStateChanged(window.fbAuth, async (user) => {
+          if (user) {
+             const userDoc = await window.fbGetDoc(window.fbDoc(window.fbDb, "users", user.uid));
+             if (userDoc.exists() && userDoc.data().hasPaid) {
+                 document.body.style.opacity = '1';
+             } else {
+                 alert("Payment required! Redirecting to secure checkout...");
+                 window.location.href = "index.html";
+             }
+          } else {
+             window.location.href = "index.html";
+          }
+        });
+      }
+    }, 200);
 
     // DYNAMIC COURSE LOADER
     const urlParams = new URLSearchParams(window.location.search);
@@ -703,5 +723,6 @@
     init();
 
   </script>
+  <script type="module" src="auth-system.js"></script>
 </body>
 </html>

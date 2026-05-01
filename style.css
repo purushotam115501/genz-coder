@@ -568,3 +568,50 @@ footer p {
     padding: 0 16px;
   }
 }
+
+/* --- Light Mode --- */
+body.light-mode {
+  --bg-color: #f0f2f5;
+  --text-main: #1c1e21;
+  --text-muted: #606770;
+  --glass-bg: rgba(255, 255, 255, 0.7);
+  --glass-border: rgba(0, 0, 0, 0.1);
+  background-image: none;
+}
+body.light-mode .w3-subnav {
+  background: #ffffff;
+  border-bottom: 1px solid #ddd;
+}
+body.light-mode .w3-subnav a {
+  color: #333;
+}
+body.light-mode .w3-hero {
+  background-color: #e4e6eb;
+}
+body.light-mode .w3-hero-title {
+  color: #1c1e21;
+}
+body.light-mode .w3-hero-subtitle {
+  color: #04AA6D;
+}
+body.light-mode .w3-hero-link {
+  color: #1c1e21;
+}
+body.light-mode .lms-sidebar {
+  background: #ffffff;
+}
+body.light-mode .practice-panel {
+  background: #f8f9fa;
+}
+body.light-mode .glass {
+  background: rgba(255,255,255,0.9);
+  color: #000;
+}
+body.light-mode input {
+  background: #fff !important;
+  color: #000 !important;
+  border: 1px solid #ccc !important;
+}
+body.light-mode .modal {
+  background: rgba(255,255,255,0.8);
+}
